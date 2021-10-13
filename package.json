@@ -1,44 +1,24 @@
 {
-  "name": "zindexer",
-  "description": "Fetches data from GitHub, Jira and pushes it to Elasticsearch",
+  "name": "jira-clone-issues",
+  "description": "Synchronize issues between two Jira projects",
   "version": "0.0.1",
   "author": "Francois Gerthoffert @Fgerthoffert",
   "bin": {
-    "zindexer": "./bin/run"
+    "jira-clone-issues": "./bin/run"
   },
-  "bugs": "https://github.com/zencrepes/zindexer/issues",
+  "bugs": "https://github.com/zencrepes/jira-clone-issues/issues",
   "dependencies": {
-    "@elastic/elasticsearch": "^7.8.0",
     "@oclif/command": "^1",
     "@oclif/config": "^1.14.0",
     "@oclif/plugin-help": "^2",
     "@types/fs-extra": "^8.0.1",
     "@types/js-yaml": "^3.12.1",
-    "@types/node-fetch": "^2.5.4",
-    "@types/uuid": "^8.3.0",
-    "@types/xregexp": "^4.3.0",
-    "apollo-cache-inmemory": "^1.6.5",
-    "apollo-client": "^2.6.8",
-    "apollo-link": "^1.2.13",
-    "apollo-link-http": "^1.5.16",
     "axios": "^0.19.0",
     "cli-ux": "^5.4.5",
-    "crypto-random-string": "^3.2.0",
-    "date-fns": "^2.8.1",
     "fs-extra": "^8.1.0",
-    "graphql": "^14.5.8",
-    "graphql-tag": "^2.10.1",
-    "jira2md": "^2.0.4",
     "js-yaml": "^3.13.1",
     "load-yaml-file": "^0.2.0",
-    "lodash": "^4.17.15",
-    "node-fetch": "^2.6.0",
-    "p-map": "^4.0.0",
-    "tslib": "^1.11.1",
-    "uuid": "^8.3.1",
-    "uuid-by-string": "^3.0.2",
-    "xml-js": "^1.6.11",
-    "xregexp": "^4.3.0"
+    "tslib": "^1.11.1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
@@ -68,7 +48,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/zencrepes/zindexer",
+  "homepage": "https://github.com/zencrepes/jira-clone-issues",
   "keywords": [
     "oclif"
   ],
@@ -76,26 +56,12 @@
   "main": "lib/index.js",
   "oclif": {
     "commands": "./lib/commands",
-    "bin": "zindexer",
+    "bin": "jira-clone-issues",
     "plugins": [
       "@oclif/plugin-help"
-    ],
-    "topics": {
-      "github": {
-        "description": "Fetches data from GitHub"
-      },
-      "jira": {
-        "description": "Fetches data from Jira"
-      },
-      "circleci": {
-        "description": "Fetches data from Circleci"
-      },
-      "utils": {
-        "description": "Set of one-off utility functions"
-      }
-    }
+    ]
   },
-  "repository": "zencrepes/zindexer",
+  "repository": "zencrepes/jira-clone-issues",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",

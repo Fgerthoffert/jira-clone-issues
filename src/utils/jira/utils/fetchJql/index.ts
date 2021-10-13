@@ -1,24 +1,22 @@
 import axios from 'axios';
 import { performance } from 'perf_hooks';
 
-import { Config, JiraIssue } from '../../../../global';
+import { JiraIssue, JiraInstance } from '../../../../global';
 
 export const fetchJql = async (
-  userConfig: Config,
-  serverName: string | undefined,
+  jiraServer: JiraInstance,
   jqlQuey: string,
   fields: string,
   startAt: number,
   maxResults: number,
 ) => {
-  const jiraServer = userConfig.jira.find(j => j.name === serverName);
   if (jiraServer !== undefined) {
     const response = await axios({
       method: 'get',
-      url: jiraServer.config.host + '/rest/api/2/search',
+      url: jiraServer.host + '/rest/api/2/search',
       auth: {
-        username: jiraServer.config.username,
-        password: jiraServer.config.password,
+        username: jiraServer.username,
+        password: jiraServer.password,
       },
       validateStatus: function(status) {
         return status >= 200 && status < 500;
@@ -40,8 +38,7 @@ export const fetchJql = async (
 };
 
 const fetchJqlPagination = async (
-  userConfig: Config,
-  serverName: string | undefined,
+  jiraServer: JiraInstance,
   jqlQuey: string,
   fields: string,
   issue: JiraIssue | null,
@@ -50,7 +47,7 @@ const fetchJqlPagination = async (
   issues: Array<JiraIssue>,
 ) => {
   console.log(
-    'Start: startAt: ' +
+    '    Start: startAt: ' +
       startAt +
       ' - maxResults: ' +
       maxResults +
@@ -59,8 +56,7 @@ const fetchJqlPagination = async (
   );
   const t0 = performance.now();
   const response = await fetchJql(
-    userConfig,
-    serverName,
+    jiraServer,
     jqlQuey,
     fields,
     startAt,
@@ -84,9 +80,8 @@ const fetchJqlPagination = async (
     addedToCache = 0;
     for (const newIssue of response.issues) {
       if (
-        newIssue.key === issue.key &&
-        newIssue.fields.updated === issue.updatedAt
-      ) {
+        new Date(newIssue.fields.updated) < new Date(issue.fields.updated) || 
+        (new Date(newIssue.fields.updated).toISOString() === new Date(issue.fields.updated).toISOString() && newIssue.key === issue.key)) {
         break;
       } else {
         issues.push(newIssue);
@@ -96,7 +91,7 @@ const fetchJqlPagination = async (
   }
   const apiPerf = Math.round(response.issues.length / (callDuration / 1000));
   console.log(
-    'Fetched: ' +
+    '    Fetched: ' +
       response.issues.length +
       ' issues - Total: ' +
       response.total +
@@ -110,11 +105,10 @@ const fetchJqlPagination = async (
     addedToCache !== response.issues.length ||
     issues.length === response.total
   ) {
-    console.log('Issue already in cache and/or dataset up to date, stopping');
+    console.log('    Issue already in cache and/or dataset up to date, stopping');
   } else {
     await fetchJqlPagination(
-      userConfig,
-      serverName,
+      jiraServer,
       jqlQuey,
       fields,
       issue,

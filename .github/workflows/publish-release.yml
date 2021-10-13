@@ -32,9 +32,9 @@ jobs:
       image: node:lts-alpine
 
     steps:
-      - run: npm -g install zindexer@${{ github.event.release.tag_name }}
-      - run: zindexer --help
-      - run: zindexer startup
+      - run: npm -g install jira-clone-issues@${{ github.event.release.tag_name }}
+      - run: jira-clone-issues --help
+      - run: jira-clone-issues startup
 
   docker:
     needs: [npm_test]
@@ -47,7 +47,7 @@ jobs:
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
-          name: zencrepes/zindexer
+          name: zencrepes/jira-clone-issues
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           tags: 'latest,${{ env.RELEASE_VERSION }}'

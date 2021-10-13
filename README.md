@@ -1,266 +1,65 @@
-# zindexer
+# jira-clone-issues
 
-Fetches data from GitHub, Jira, CircleCI (and more to come) and pushes it to an Elasticsearch instance.
+Forked from [jira-clone-issues](https://github.com/zencrepes/jira-clone-issues), this projects aims at cloning issues from one project on a Jira instance to another project in another Jira instance.
 
-_This project aims at replacing ZenCrepes's [github-indexer](https://github.com/zencrepes/github-indexer), adding abilities to fetch data from Jira (thus the need for a rename). _
+The main purpose is to be able to import issues from a project in a remote Jira instance to be able to see those in an Agile board amongst other issues worked on by a team.
 
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
-[![Version](https://img.shields.io/npm/v/zindexer.svg)](https://npmjs.org/package/zindexer)
-[![CircleCI](https://circleci.com/gh/zencrepes/zindexer/tree/master.svg?style=shield)](https://circleci.com/gh/zencrepes/zindexer/tree/master)
-[![Downloads/week](https://img.shields.io/npm/dw/zindexer.svg)](https://npmjs.org/package/zindexer)
-[![License](https://img.shields.io/npm/l/zindexer.svg)](https://github.com/zencrepes/zindexer/blob/master/package.json)
+## Overview
 
-<!-- toc -->
+Synchronizing resources between Jira instances can be very challenging, mostly due to limitations of Jira REST API. To work around those limitations, the script was implemented to be articulated around a limited number of fields that are being re-imported whenever an issue is updated on the source Jira instance.
 
-- [Introduction](#introduction)
-- [Quick start with Docker](#quick-start-with-docker)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Commands](#commands)
-  <!-- tocstop -->
+Currently, the following four fields are imported:
+* status (open, in-progress, closed...)
+* type (Story, Defect, ...)
+* summary (title)
+* description: this field gets updated to include a header containing details about the source (such as link, reporter, assignee) as well as comments in the source instance.
 
-# Introduction
+All of the other fields are free to be used on the destination Jira instance and will not be overwritten during synchronization. This allow the team to add labels, sprints, different assignees, and more... on the destination instance without impacting the source Jira instance.
 
-<!-- introduction -->
+The system was designed on the assumption that the user has limited access to the source Jira instance, and greater level of permissions on the destination Jira instance.
 
-This script has been created to easily export Data from GitHub, Jira, CircleCI & more and import it into an Elasticsearch instance to be later used for data analytics (via ZenCrepes, Kibana or other)
+## Configuration
 
-Whenever possible (i.e. issues, milestones, projects), it loads data sorted by the updated date in descending order (most recent first) and will stop as soon as it find the same node already in Elasticsearch. This way, first load takes some time, then you can just cron it to keep your Elasticsearch instance up to date.
+You will need to create a project on your destination instance, which must be pre-configured with the necessary statuses, issue types and workflow. The workflow must either be configured to allow any transition or to match the workflow in the source project.
 
-The overall logic is articulated around 3 stages:
-
-- Identify sources (GitHub repositories and/or Jira Projects) to load data from
-- [OPTIONAL] Select which sources to load data from by editing `~/.config/zindexer/sources.yml`
-- Load data from the selected repositories (for example `zindxer gIssues` to load GitHub issues)
-
-You can then re-run the scripts at regular interval to fetch the updated nodes.
-
-Note: GitHub doesn't provide a mechanism to fetch new or updated labels so the script will (flush the index and) load all labels every time `gLabels` is executed.
-
-# Documentation
-
-You can find ZenCrepes documentation on [docs.zencrepes.io](https://docs.zencrepes.io/), issues should be created [here](https://github.com/zencrepes/zencrepes/issues).
-
-This readme only contains developer-focused details.
-
-# About Bit
-
-Bit components are exported from Zindexer, those are used to share logic between the various ZenCrepes services.
-
-- https://bit.dev/
-- https://docs.bit.dev/docs/quick-start
-- https://medium.com/javascript-in-plain-english/how-i-share-react-components-between-projects-3896d853cbee
+To help you in preparing the configuration, a `prepare` command has been created. It will fetch all issues from the source, grab the list of statuses/types and compare it with the ones available in the destination server.
 
 ```bash
-bit login
-bit status
-bit tag config 0.0.11 / bit tag --all 0.0.11
-bit build
-bit export zencrepes.zindexer
+#> jira-clone-issues perpare
 ```
 
-Add new component:
+The destination project must also be configured with the screen containing the fields to be modified (summary, description, type).
+
+### Mappings
+
+The configuration file contains three sections dealing with mapping elements from one project to the next. Each of them contains a `source` and `destination` corresponding to the source and destination jira projects.
+
+| config | Description |
+|---|---|
+| issueTypes | Map issue types between resources, for example if `Bug` on the source project must translate into `Defect` on the destination project |
+| status  | Map status between resources, for example if `OPEN` on the source project must translate into `TO-DO` on the destination project |
+
+### Custom fields
+
+Go to Jira > Administartion > Issues > Custom field, and create a custom field that will be used to store the date at which an issue in the source Jira instance was last updated At. This is useful to quickly compare the issue's data between the source and destination.
+
+Jira is going to automatically assign this field an ID in the format `customfield_11610`. Edit this custom field and look at the page URL (for example: https://jira.domain.org/secure/admin/ConfigureCustomField!default.jspa?customFieldId=11610). In that particular case the field becomes: `customfield_11610`.
+
+Update your configuration file with this for the config parameter `syncSourceUpdatedAt`.
+
+## Limitations
+
+* Do NOT delete issues from the destination, if you do so you might end-up with ticket keys being out of sync
+* All fields to be modified MUST be on a screen
+
+## Use
+
+To determine what needs to be updated, the script will first connect to the destination instance to grab the most recently udpated issue (using the `syncSourceUpdatedAt` field created above). It will then begin grabbing issues from the source in batch of X issues (`X` being the `maxNodes` in the configuration) until it reaches an issue with its `updated` date older than the most recent issue on the destination server.
+
+To make best use of this synchronization, it is recommended to do the first synchronization manually (as it will likely fetch a large number of issues), then use a cron job to fetch the updated issues every couple of minutes.
+
+You can update tickets using the following command: 
+
 ```bash
-bit add src/components/testingPerfs
+#> jira-clone-issues update
 ```
-
-# Usage
-
-<!-- usage -->
-
-```sh-session
-$ npm install -g zindexer
-$ zindexer COMMAND
-running command...
-$ zindexer (-v|--version|version)
-zindexer/0.0.1 darwin-x64 node-v12.13.0
-$ zindexer --help [COMMAND]
-USAGE
-  $ zindexer COMMAND
-...
-```
-
-<!-- usagestop -->
-
-# Commands
-
-<!-- commands -->
-
-- [`zindexer gIssues`](#zindexer-gissues)
-- [`zindexer gLabels [FILE]`](#zindexer-glabels-file)
-- [`zindexer gMilestones`](#zindexer-gmilestones)
-- [`zindexer gProjects`](#zindexer-gprojects)
-- [`zindexer gPullrequests`](#zindexer-gpullrequests)
-- [`zindexer gReleases`](#zindexer-greleases)
-- [`zindexer gRepos`](#zindexer-grepos)
-- [`zindexer help [COMMAND]`](#zindexer-help-command)
-- [`zindexer jIssues`](#zindexer-jissues)
-- [`zindexer jProjects`](#zindexer-jprojects)
-- [`zindexer sources [FILE]`](#zindexer-sources-file)
-
-## `zindexer gIssues`
-
-Github: Fetches issues data from configured sources
-
-```
-USAGE
-  $ zindexer gIssues
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/gIssues.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/gIssues.ts)_
-
-## `zindexer gLabels [FILE]`
-
-describe the command here
-
-```
-USAGE
-  $ zindexer gLabels [FILE]
-
-OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
-```
-
-_See code: [src/commands/gLabels.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/gLabels.ts)_
-
-## `zindexer gMilestones`
-
-Github: Fetches milestones data from configured sources
-
-```
-USAGE
-  $ zindexer gMilestones
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/gMilestones.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/gMilestones.ts)_
-
-## `zindexer gProjects`
-
-Github: Fetches projects data from configured sources
-
-```
-USAGE
-  $ zindexer gProjects
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/gProjects.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/gProjects.ts)_
-
-## `zindexer gPullrequests`
-
-Github: Fetches Pullrequests data from configured sources
-
-```
-USAGE
-  $ zindexer gPullrequests
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/gPullrequests.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/gPullrequests.ts)_
-
-## `zindexer gReleases`
-
-Github: Fetches releases data from configured sources
-
-```
-USAGE
-  $ zindexer gReleases
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/gReleases.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/gReleases.ts)_
-
-## `zindexer gRepos`
-
-Github: Fetches repos data from configured sources
-
-```
-USAGE
-  $ zindexer gRepos
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/gRepos.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/gRepos.ts)_
-
-## `zindexer help [COMMAND]`
-
-display help for zindexer
-
-```
-USAGE
-  $ zindexer help [COMMAND]
-
-ARGUMENTS
-  COMMAND  command to show help for
-
-OPTIONS
-  --all  see all commands in CLI
-```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
-
-## `zindexer jIssues`
-
-Jira: Fetches issues data from configured sources
-
-```
-USAGE
-  $ zindexer jIssues
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/jIssues.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/jIssues.ts)_
-
-## `zindexer jProjects`
-
-Jira: Fetches project data from configured sources
-
-```
-USAGE
-  $ zindexer jProjects
-
-OPTIONS
-  -h, --help  show CLI help
-```
-
-_See code: [src/commands/jProjects.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/jProjects.ts)_
-
-## `zindexer sources [FILE]`
-
-Manage sources of data
-
-```
-USAGE
-  $ zindexer sources [FILE]
-
-OPTIONS
-  -a, --active                     Automatically make the new sources active by default
-  -g, --ggrab=affiliated|org|repo  [default: affiliated] If Github, Select how to fetch repositories
-  -h, --help                       show CLI help
-  -l, --load                       Load active status from status file: CONFIG_DIR/sources.yml
-  -o, --gorg=gorg                  If Github, organization login
-  -r, --grepo=grepo                If Github, repository name
-  -t, --type=JIRA|GITHUB           [default: GITHUB] Type of source (JIRA or GitHUB)
-```
-
-_See code: [src/commands/sources.ts](https://github.com/zencrepes/zindexer/blob/v0.0.1/src/commands/sources.ts)_
-
-<!-- commandsstop -->

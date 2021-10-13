@@ -11,6 +11,6 @@ COPY ./startup.sh /usr/share/zencrepes/
 WORKDIR /usr/share/zencrepes/
 RUN chmod +x ./startup.sh
 
-RUN npm install -g zindexer@latest
+RUN npm install -g jira-clone-issues@latest
 
 CMD ["/bin/bash", "-c", "/usr/share/zencrepes/startup.sh"]
