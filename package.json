@@ -6,7 +6,7 @@
   "bin": {
     "jira-clone-issues": "./bin/run"
   },
-  "bugs": "https://github.com/zencrepes/jira-clone-issues/issues",
+  "bugs": "https://github.com/fgerthoffert/jira-clone-issues/issues",
   "dependencies": {
     "@oclif/command": "^1",
     "@oclif/config": "^1.14.0",
@@ -48,7 +48,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/zencrepes/jira-clone-issues",
+  "homepage": "https://github.com/fgerthoffert/jira-clone-issues",
   "keywords": [
     "oclif"
   ],
@@ -61,7 +61,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "zencrepes/jira-clone-issues",
+  "repository": "fgerthoffert/jira-clone-issues",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
