@@ -1,6 +1,6 @@
 # jira-clone-issues
 
-Forked from [jira-clone-issues](https://github.com/zencrepes/jira-clone-issues), this projects aims at cloning issues from one project on a Jira instance to another project in another Jira instance.
+Forked from [zindexer](https://github.com/zencrepes/zindexer), this projects aims at cloning issues from one project on a Jira instance to another project in another Jira instance.
 
 The main purpose is to be able to import issues from a project in a remote Jira instance to be able to see those in an Agile board amongst other issues worked on by a team.
 
