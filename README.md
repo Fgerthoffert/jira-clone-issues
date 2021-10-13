@@ -63,3 +63,5 @@ You can update tickets using the following command:
 ```bash
 #> jira-clone-issues update
 ```
+
+.
