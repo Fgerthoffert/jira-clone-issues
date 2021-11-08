@@ -7,9 +7,9 @@ jobs:
   npm_publish:
     runs-on: ubuntu-latest
 
-    container:
-      image: node:lts-alpine
-      options: --user node
+    # container:
+    #   image: node:lts-alpine
+    #   options: --user node
 
     steps:
       - uses: actions/checkout@master
