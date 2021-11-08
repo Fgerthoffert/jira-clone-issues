@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
-      - run: apt install curl
+      - run: sudo apt install curl
       - run: curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
       - run: source ~/.profile 
       - run: nvm install --lts
