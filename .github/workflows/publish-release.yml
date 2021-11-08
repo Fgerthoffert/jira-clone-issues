@@ -13,12 +13,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
-      - run: sudo apt install curl
-      - run: curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
-      - run: source ~/.profile 
-      - run: nvm install --lts
-      - run: nvm use --lts
-      - run: node -v
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 'lts/*'
       - run: whoami
       - run: ls -lah ./
       - run: yarn
