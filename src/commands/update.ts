@@ -15,6 +15,7 @@ import fetchJqlPagination from '../utils/jira/utils/fetchJql';
 import createEmptyIssue from '../utils/jira/utils/createEmptyIssue';
 import batchUpdateIssues from '../utils/jira/utils/batchUpdateIssues';
 import batchUpdateStatus from '../utils/jira/utils/batchUpdateStatus';
+import { isUndefined } from 'util';
 
 const getLastissuesToUpdate = async (jiraInstance: JiraInstance & JiraInstanceDestination) => {
   let dateField = 'updated';
@@ -125,12 +126,27 @@ export default class Issues extends Command {
     if (issuesToUpdate.length === 0) {
       this.log(`No issues require an update, exiting`)
       this.exit()
-    } 
+    }
+
+    // Check if all issues exist on the destination instance before grabbing status
+    // We will then filter these to make sure we don't try to push data for an issue that does not exist
+    cli.action.start(`Grab all issues located in the destination instance`);
+    const destinationIssuesKeysRaw = await fetchJqlPagination(
+      userConfig.destination,
+      'project = "' + userConfig.source.projectKey + '" ORDER BY updated DESC',
+      'key',
+      null,
+      0,
+      userConfig.source.fetch.maxNodes,
+      [],
+    );
+    cli.action.stop(`done`)
+    const destinationIssuesKeys = destinationIssuesKeysRaw.map(i => i.key)
 
     cli.action.start(`Grab issues status from the recently updated issues`);
     const destinationIssues = await fetchJqlPagination(
       userConfig.destination,
-      `key in(${issuesToUpdate.map((i) => i.key).toString()})`,
+      `key in(${issuesToUpdate.filter((i) => destinationIssuesKeys.includes(i.key)).map((i) => i.key).toString()})`,
       '*navigable,comment',
       null,
       0,
@@ -139,12 +155,15 @@ export default class Issues extends Command {
     );
     cli.action.stop(`done`)
 
+    this.log(`Issues to update: ${JSON.stringify(issuesToUpdate.map((i) => i.key))}`)
+    this.log(`Destination issues: ${JSON.stringify(destinationIssues.map((i) => i.key))}`)
+
     cli.action.start(`Updating issues status when necessary`);
-    await batchUpdateStatus(userConfig, issuesToUpdate, destinationIssues, this.log)
+    await batchUpdateStatus(userConfig, issuesToUpdate.filter((i) => destinationIssuesKeys.includes(i.key)), destinationIssues, this.log)
     cli.action.stop(`done`)
 
     cli.action.start(`Bulk updating issues content`);
-    await batchUpdateIssues(userConfig, issuesToUpdate, this.log)
+    await batchUpdateIssues(userConfig, issuesToUpdate.filter((i) => destinationIssuesKeys.includes(i.key)), this.log)
     cli.action.stop(`done`)    
   }
 }

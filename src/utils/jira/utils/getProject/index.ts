@@ -19,7 +19,7 @@ const getProject = async (jiraServer: JiraInstance) => {
     } catch (error: any) {
       console.log(error)
       console.log(error.response.data.errors)
-      console.log('There has been an error')
+      console.log('There has been an error, please verify your credentials')
     }
     if (Object.keys(response.data).length > 0) {
       return response.data;
