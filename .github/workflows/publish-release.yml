@@ -16,10 +16,10 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 'lts/*'
-      - run: whoami
-      - run: ls -lah ./
+      - run: whoami && node -v && ls -lah
       - run: yarn
       - run: npm -g install typescript@4.2.3
+      - run: tsc -v
       - run: npm -g install @oclif/dev-cli@latest
       - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
       - run: npm --no-git-tag-version version ${{ github.event.release.tag_name }}
