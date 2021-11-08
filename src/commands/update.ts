@@ -15,7 +15,6 @@ import fetchJqlPagination from '../utils/jira/utils/fetchJql';
 import createEmptyIssue from '../utils/jira/utils/createEmptyIssue';
 import batchUpdateIssues from '../utils/jira/utils/batchUpdateIssues';
 import batchUpdateStatus from '../utils/jira/utils/batchUpdateStatus';
-import { isUndefined } from 'util';
 
 const getLastissuesToUpdate = async (jiraInstance: JiraInstance & JiraInstanceDestination) => {
   let dateField = 'updated';
