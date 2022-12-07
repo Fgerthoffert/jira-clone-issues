@@ -44,8 +44,8 @@ const batchUpdateIssues = async (userConfig: Config, issuesToPush: any[], logger
     let descriptionField = `Source Project: ${sourceIssue.fields.project.name} \n`
     descriptionField += `Last Updated: ${new Date(sourceIssue.fields.updated)} (Imported: ${new Date()}) \n`
     descriptionField += `Link: ${userConfig.source.host}/browse/${sourceIssue.key} \n`
+    descriptionField += `Type: ${sourceIssue.fields.issuetype.name} \n`
     if (sourceIssue.fields.parent !== undefined && sourceIssue.fields.parent !== null) {
-      descriptionField += `Type: ${sourceIssue.fields.issuetype.name} \n`
       descriptionField += `Parent: ${userConfig.source.host}/browse/${sourceIssue.fields.parent.key} (${sourceIssue.fields.parent.fields.summary}) \n`
     }
     descriptionField += `Reporter: ${sourceIssue.fields.reporter === null ? 'EMPTY' : sourceIssue.fields.reporter.displayName} \n`
