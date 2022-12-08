@@ -19,12 +19,11 @@ jobs:
       - run: yarn
       - run: npm -g install typescript@4.2.3
       - run: whoami && node -v && ls -lah && tsc -v
-      - run: npm -g install @oclif/dev-cli@latest
+      - run: npm -g install @oclif/dev-cli @oclif/help
       - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
       - run: npm --no-git-tag-version version ${{ github.event.release.tag_name }}
       - run: tsc -b
       - run: oclif-dev manifest
-      - run: oclif-dev readme
       - run: ls -lah ./
       - run: npm publish
 
