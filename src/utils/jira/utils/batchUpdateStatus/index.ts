@@ -16,18 +16,25 @@ const batchUpdateStatus = async (userConfig: Config, issuesToPush: any[], destin
       let srcTransition = availableTransitions.find((t: JiraTransition) => t.name === sourceIssue.fields.status.name);
       let dstTransition: JiraTransition | null = srcTransition !== undefined ? srcTransition : {};
       if (dstTransition !== null) {
-      // If the transition couldn't be found in the list of available transition from the array initially fetched
-      // It's possible it's coming from another transition not available then, so we're fetching the list again
-      const transitions = await getIssueTransitions(userConfig.destination, destinationIssue.key)        
-      for (const t of transitions) {
-          if (!availableTransitions.find((at: JiraTransition) => at.name === t.name)) {
-          availableTransitions.push({id: t.id, name: t.name})
-          }
-      }
-      srcTransition = availableTransitions.find((t: JiraTransition) => t.name === sourceIssue.fields.status.name);
-      if (srcTransition !== undefined) {
-          dstTransition = srcTransition
-      }
+        // If the transition couldn't be found in the list of available transition from the array initially fetched
+        // It's possible it's coming from another transition not available then, so we're fetching the list again
+        const transitions = await getIssueTransitions(userConfig.destination, destinationIssue.key)        
+        for (const t of transitions) {
+            if (!availableTransitions.find((at: JiraTransition) => at.name === t.name)) {
+            availableTransitions.push({id: t.id, name: t.name})
+            }
+        }
+        srcTransition = availableTransitions.find((t: JiraTransition) => t.name === sourceIssue.fields.status.name);
+        if (srcTransition === undefined) {
+          // If the transition couldn't be found in the remote server, we look into the re-assignment done in configuration
+          const remapTransition = userConfig.status.find((t) => t.source === sourceIssue.fields.status.name)
+          if (remapTransition !== undefined) {
+            dstTransition = availableTransitions.find((t) => t.name === remapTransition.destination);
+          }          
+        }
+        if (srcTransition !== undefined) {
+            dstTransition = srcTransition
+        }
       }
       if (dstTransition !== null) {
         logger(`Submitting transition for update: ${JSON.stringify(dstTransition)}`)
